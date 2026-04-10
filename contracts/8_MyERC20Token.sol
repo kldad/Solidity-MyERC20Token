@@ -53,11 +53,11 @@ contract MyERC20Token is IERC6093 {
         return true;
     }
 
-    function transfer(address to, uint256 amount) external override returns (bool success) {
+    function transfer(address to, uint256 amount) public override returns (bool success) {
         return _transfer(msg.sender, to, amount);
     }
 
-    function transferFrom(address from, address to, uint256 amount) external override returns (bool success) {
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool success) {
         if(from == msg.sender) {
             revert ERC20InvalidSender(from);
         }
@@ -76,7 +76,7 @@ contract MyERC20Token is IERC6093 {
             return false;
     }
 
-    function approve(address spender, uint256 amount) external returns (bool success) {
+    function approve(address spender, uint256 amount) public returns (bool success) {
         if(msg.sender == address(0)) {
             revert ERC20InvalidApprover(msg.sender);
         }
