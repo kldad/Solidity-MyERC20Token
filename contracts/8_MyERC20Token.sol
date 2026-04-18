@@ -10,10 +10,15 @@ contract MyERC20Token is IERC6093 {
     string public override name;
     string public override symbol;
     uint8 public override decimals;
+    uint256 private constant BURNING_LIMIT = 10;
+
     mapping (address owner => uint256 balance) public override balanceOf;
     uint256 public override totalSupply;
 
     mapping (address owner => mapping (address spender => uint256 remaining)) public override allowance;
+
+    error MyERC20TokenBurningOverLimit(uint256 amount, uint256 limit);
+    error MyERC20TokenBurningAllTheBalance(uint256 amount, uint256 balance);
 
     modifier onlyOwner {
         require(msg.sender == owner, "Only the contract owner can call this function");
@@ -27,7 +32,7 @@ contract MyERC20Token is IERC6093 {
         symbol = "KLD";
         decimals = 2;
 
-        mint(1_0 * (10 ** decimals));
+        mint(10 * (10 ** decimals));
     }
 
     function _transfer(address from, address to, uint256 amount) internal returns (bool success) {
@@ -39,9 +44,12 @@ contract MyERC20Token is IERC6093 {
         }
 
         uint256 balance = balanceOf[from];
+        ///*
         if(amount > balance) {
             revert ERC20InsufficientBalance(from, balance, amount);
         }
+        //*/
+        //require(amount <= balance, "Insufficient balance");
 
         unchecked {
             balanceOf[from] -= amount;
@@ -95,17 +103,24 @@ contract MyERC20Token is IERC6093 {
         balanceOf[msg.sender] += amount;
         totalSupply += amount;
         emit Transfer(address(0), msg.sender, amount);
-
     }
 
     function burn(uint256 amount) external onlyOwner {
         uint256 balance = balanceOf[msg.sender];
 
-        if( amount > balance )
-            amount = balance;
+        if( amount > BURNING_LIMIT ) {
+            revert MyERC20TokenBurningOverLimit(amount, BURNING_LIMIT);
+        }    
 
-        balanceOf[msg.sender] -= amount;
-        totalSupply -= amount;
+        if( amount >= balance ) {
+            revert MyERC20TokenBurningAllTheBalance(amount, balance);
+        }    
+
+        unchecked {
+            balanceOf[msg.sender] -= amount;
+            totalSupply -= amount;
+        }    
+
         emit Transfer(msg.sender, address(0), amount);
     }
 }
